@@ -11,9 +11,22 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
+import os  
+from decouple import config 
+
+# Specify the path to the .env file  
+
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+#print(BASE_DIR)
+MEDIA_URL = '/media/'  
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media') 
+
+GOOGLE_OAUTH2_CLIENT_ID = config("DJANGO_GOOGLE_OAUTH2_CLIENT_ID")  
+GOOGLE_OAUTH2_CLIENT_SECRET = config("DJANGO_GOOGLE_OAUTH2_CLIENT_SECRET")  
+GOOGLE_OAUTH2_PROJECT_ID = config("DJANGO_GOOGLE_OAUTH2_PROJECT_ID")
 
 
 # Quick-start development settings - unsuitable for production
@@ -38,17 +51,26 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',  
+    'allauth',  
+    'allauth.account',  
+    'allauth.socialaccount',  
+    'allauth.socialaccount.providers.google', 
+    'dj_rest_auth',
     'rest_framework',
     'rest_framework.authtoken',
     'snippets',
     'User',
     'Video',
     'subscription',
+    'django_celery_beat',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
+    # 'allauth.account.auth_backends.AuthenticationBackend',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -87,7 +109,7 @@ DATABASES = {
     }
 }
 
-
+SITE_ID = 1  
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 
@@ -144,9 +166,17 @@ REST_FRAMEWORK = {
 }
 
 AUTHENTICATION_BACKENDS = (  
-    'User.backend.EmailOrPhoneOrUsernameBackend',  
-    'django.contrib.auth.backends.ModelBackend',   
+    #'User.backend.EmailOrPhoneOrUsernameBackend',  
+    'django.contrib.auth.backends.ModelBackend', 
+    'allauth.account.auth_backends.AuthenticationBackend',  
 )  
+
+ACCOUNT_EMAIL_REQUIRED = True  
+ACCOUNT_EMAIL_VERIFICATION = "none" 
+ACCOUNT_AUTHENTICATION_METHOD = 'username' # To skip email verification during development  
+LOGIN_URL = "account_login"  
+LOGIN_REDIRECT_URL = "/"  
+ACCOUNT_LOGOUT_REDIRECT_URL = '/' 
 
 # from datetime import timedelta  
 # from rest_framework_simplejwt.authentication import JWTAuthentication  
@@ -156,3 +186,27 @@ AUTHENTICATION_BACKENDS = (
 #     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),  
 #     'AUTH_HEADER_TYPES': ('Bearer',),  
 # }  
+CELERY_BROKER_URL = 'redis://localhost:6379/0'   
+CELERY_ACCEPT_CONTENT = ['json']  
+CELERY_TASK_SERIALIZER = 'json' 
+
+from django_celery_beat import models
+from datetime import timedelta  
+
+schedule, created = models.IntervalSchedule.objects.get_or_create(  
+    every=24,  
+    period=IntervalSchedule.HOURS,  
+)  
+
+ 
+models.PeriodicTask.objects.create(  
+    interval=schedule,  
+    name='Deactivate expired subscriptions',  
+    task='subscription.tasks.deactivate_expired_subscriptions',  
+)  
+  
+# PeriodicTask.objects.create(  
+#     interval=schedule,  
+#     name='Notify users about subscription expiration',  
+#     task='subscription.tasks.notify_users_about_expiration',  
+# )
