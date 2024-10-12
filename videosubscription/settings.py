@@ -59,11 +59,11 @@ INSTALLED_APPS = [
     'dj_rest_auth',
     'rest_framework',
     'rest_framework.authtoken',
-    'snippets',
     'User',
     'Video',
     'subscription',
     'django_celery_beat',
+    'channels',
 ]
 
 MIDDLEWARE = [
@@ -190,23 +190,13 @@ CELERY_BROKER_URL = 'redis://localhost:6379/0'
 CELERY_ACCEPT_CONTENT = ['json']  
 CELERY_TASK_SERIALIZER = 'json' 
 
-from django_celery_beat import models
-from datetime import timedelta  
-
-schedule, created = models.IntervalSchedule.objects.get_or_create(  
-    every=24,  
-    period=IntervalSchedule.HOURS,  
-)  
-
- 
-models.PeriodicTask.objects.create(  
-    interval=schedule,  
-    name='Deactivate expired subscriptions',  
-    task='subscription.tasks.deactivate_expired_subscriptions',  
-)  
+ASGI_APPLICATION = 'videosubscription.asgi.application'
   
-# PeriodicTask.objects.create(  
-#     interval=schedule,  
-#     name='Notify users about subscription expiration',  
-#     task='subscription.tasks.notify_users_about_expiration',  
-# )
+CHANNEL_LAYERS = {  
+    'default': {  
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',  
+        'CONFIG': {  
+            "hosts": [('127.0.0.1', 6379)],  
+        },  
+    },  
+}

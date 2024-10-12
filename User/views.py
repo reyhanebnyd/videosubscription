@@ -99,36 +99,6 @@ class UpdateProfileViewSet(viewsets.ModelViewSet):
 
         return Response(serializer.data) 
 
-
-# class GoogleLoginView(generics.GenericAPIView):  
-#     serializer_class = GoogleLoginSerializer  
-#     permission_classes = [AllowAny]  
-
-#     def post(self, request, *args, **kwargs):  
-#         serializer = self.get_serializer(data=request.data)  
-#         serializer.is_valid(raise_exception=True)  
-
-#         user = serializer.validated_data['user']  
-#         token = self.get_token_for_user(user)  
-
-#         return Response({  
-#             "message": "Login successful",  
-#             "token": token,  
-#             "user": {  
-#                 "id": user.id,  
-#                 "username": user.username,  
-#                 "email": user.email,  
-#                 # Additional fields if needed  
-#             }  
-#         }, status=status.HTTP_200_OK)  
-
-#     def get_token_for_user(self, user):  
-#         refresh = RefreshToken.for_user(user)  
-#         return {  
-#             'refresh': str(refresh),  
-#             'access': str(refresh.access_token),  
-#         }  
-
 class ChangePasswordView(generics.GenericAPIView):
     """
     Returns a list of all **active** accounts in the system.
@@ -150,60 +120,3 @@ class ChangePasswordView(generics.GenericAPIView):
         serializer.save()
 
         return Response({'success': True})        
-
-class GoogleLogin(SocialLoginView):  
-    adapter_class = GoogleOAuth2Adapter         
-
-
-class GoogleOAuth2LoginView(APIView):  
-    permission_classes = [AllowAny]  
-
-    def post(self, request):  
-        token = request.data.get("token")  # This is the Google OAuth token received  
-
-        if not token:  
-            return Response({"error": "Token is required"}, status=status.HTTP_400_BAD_REQUEST)  
-
-        # Verify token and get the user info from Google  
-        user_info_endpoint = "https://www.googleapis.com/oauth2/v3/userinfo"  
-        headers = {"Authorization": f"Bearer {token}"}  
-        
-        user_info_response = requests.get(user_info_endpoint, headers=headers)  
-
-        if user_info_response.status_code != 200:  
-            return Response({"error": "Invalid token"}, status=status.HTTP_400_BAD_REQUEST)  
-
-        user_info = user_info_response.json()  
-        email = user_info.get("email")  
-
-        if not email:  
-            return Response({"error": "Email not found in user info"}, status=status.HTTP_400_BAD_REQUEST)  
-
-        # Check if the user already exists  
-        try:  
-            user = CustomUser.objects.get(email=email)  
-            social_account = SocialAccount.objects.filter(user=user, provider='google').first()  
-
-            # If the account exists, authenticate the user  
-            if social_account:  
-                # Log the user in using complete_social_login from allauth  
-                social_login = SocialLogin(user=user)  
-                utils.complete_social_login(request, social_login)  
-                return Response({"success": "User logged in successfully"}, status=status.HTTP_200_OK)  
-            else:  
-                return Response({"error": "User is not registered with Google."}, status=status.HTTP_400_BAD_REQUEST)  
-
-        except CustomUser.DoesNotExist:  
-            # If the user does not exist, we create a new user  
-            user = CustomUser(email=email, username=email.split('@')[0])  
-            user.set_unusable_password()  # If you don't need a password  
-            user.save()  
-
-            # Create a social account for the new user  
-            SocialAccount.objects.create(user=user, provider='google', uid=user_info.get('sub'))  
-
-            # Log the user in using complete_social_login  
-            social_login = SocialLogin(user=user)  
-            complete_social_login(request, social_login)  
-
-            return Response({"success": "User registered and logged in successfully"}, status=status.HTTP_201_CREATED)  

@@ -3,8 +3,6 @@ from rest_framework import serializers
 from .models import CustomUser, Profile
 from rest_framework.validators import UniqueValidator
 from django.contrib.auth.models import User
-# from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter  
-# from allauth.socialaccount.providers.oauth2.client import OAuth2Error
 
 class PasswordConfirmationMixin:
     def validate(self, data):
@@ -111,41 +109,6 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'user': {'read_only': True},
         }
     
-
-# class GoogleLoginSerializer(serializers.Serializer):  
-#     access_token = serializers.CharField()  
-
-#     def validate(self, attrs):  
-#         access_token = attrs.get('access_token')  
-
-#         # Use Google API to verify the token and extract user info  
-#         try:  
-#             response = requests.get(  
-#                 f'https://oauth2.googleapis.com/tokeninfo?access_token={access_token}'  
-#             )  
-#             google_data = response.json()  
-
-#             if response.status_code != 200:  
-#                 raise serializers.ValidationError({'error': 'Invalid token.'})  
-
-#             email = google_data.get('email')  
-#             username = email.split('@')[0]  # Default username to part before @  
-
-#         except Exception as e:  
-#             raise serializers.ValidationError({'error': 'Invalid token.'})  
-
-#         user, created = CustomUser.objects.get_or_create(  
-#             email=email,  
-#             defaults={'username': username}  
-#         )  
-
-#         if not created:  
-#             if user.username != username:  
-#                 user.username = username  
-#                 user.save()  
-
-#         attrs['user'] = user  
-#         return attrs
 
 class ChangePasswordSerializer(
     PasswordConfirmationMixin,
