@@ -8,20 +8,35 @@ from django.db.models import Avg
 from channels.layers import get_channel_layer  
 from asgiref.sync import async_to_sync  
 from rest_framework.response import Response
+from rest_framework import permissions  
+from subscription.models import Subscription
+
+class HasActiveSubscription(permissions.BasePermission):  
+    """  
+    Custom permission to check if the user has an active subscription.  
+    """  
+    
+    def has_permission(self, request, view):  
+        print("what the fuck")
+        if not request.user.is_authenticated:  
+            print("hello1")
+            return False  
+         
+        if request.user.subscriptions.filter(is_active=True).exists():
+            print("hello")
+            return True
+        return False
+            
 
 class MovieViewSet(viewsets.ModelViewSet):  
     queryset = Movie.objects.all()  
     serializer_class = MovieSerializer  
     permission_classes = [IsAdminUser]  
 
-class ReviewViewSet(viewsets.ModelViewSet):  
-    queryset = Review.objects.all()  
-    serializer_class = ReviewSerializer  
-    permission_classes = [IsAuthenticated]    
 
 class WatchlistViewSet(viewsets.ModelViewSet):    
     serializer_class = WatchlistSerializer  
-    permission_classes = [IsAuthenticated]  
+    permission_classes = [HasActiveSubscription]  
 
     def perform_create(self, serializer):  
      
@@ -34,7 +49,7 @@ class WatchlistViewSet(viewsets.ModelViewSet):
 class MovieListView(viewsets.ReadOnlyModelViewSet):  
     queryset = Movie.objects.all()  
     serializer_class = MovieSerializer  
-    permission_classes = [IsAuthenticated]  
+    permission_classes = [HasActiveSubscription]  
     
 
     def retrieve(self, request, *args, **kwargs):  
@@ -70,7 +85,7 @@ class MovieListView(viewsets.ReadOnlyModelViewSet):
 
 class ReviewViewSet(viewsets.ModelViewSet):  
     serializer_class = ReviewSerializer  
-    permission_classes = [IsAuthenticated]  
+    permission_classes = [HasActiveSubscription]  
 
     def get_queryset(self):  
     

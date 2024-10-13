@@ -66,31 +66,31 @@ class LoginSerializer(serializers.Serializer):
         print(identifier) 
         
 
-        # Attempt to authenticate with the identifier  
+
         user = None  
 
-        #Check if the identifier is an email, username, or phone number  
+       
         if "@" in identifier:  
-            # Authenticate using email  
+            
             user = CustomUser.objects.get(email=identifier)  
         else:  
             try:  
-                # First, let's try to find the user via username  
+             
                 user = CustomUser.objects.get(username=identifier) 
                 
                 
             except CustomUser.DoesNotExist:  
                 try:  
-                    # If not found, try to find by phone number  
+                 
                     user = CustomUser.objects.get(phone_number=identifier)  
                 except CustomUser.DoesNotExist:  
                     user = None  
 
-        # Verify if user is authenticated  
+      
         if user is None or not user.check_password(password):  
             raise serializers.ValidationError("Invalid credentials. Please try again.")  
 
-        attrs['user'] = user  # Add the authenticated user to the attributes  
+        attrs['user'] = user    
         return attrs  
 
     class Meta:  

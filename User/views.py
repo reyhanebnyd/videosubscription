@@ -53,7 +53,7 @@ class LoginView(generics.GenericAPIView):
                 "id": user.id,  
                 "username": user.username,  
                 "email": user.email,  
-                # Add any additional user fields you want returned  
+                 
             }  
         }, status=status.HTTP_200_OK) 
 

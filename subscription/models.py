@@ -9,7 +9,7 @@ class Subscription(models.Model):
         ('y', 'yearly'),
     }
     
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='subscriptions')
     is_active = models.BooleanField(null=False, blank=False, default=False)
     start_date = models.DateField(null=False, blank=False, auto_now_add=True)
     end_date = models.DateField()

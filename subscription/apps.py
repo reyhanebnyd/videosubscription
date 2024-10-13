@@ -14,7 +14,7 @@ class SubscriptionConfig(AppConfig):
 
 @receiver(post_migrate)  
 def create_periodic_task(sender, **kwargs):  
-    if sender.name == 'subscription':  # change this to your app name  
+    if sender.name == 'subscription':    
         from .tasks import deactivate_expired_subscriptions  
         from django_celery_beat.models import IntervalSchedule, PeriodicTask  
         
